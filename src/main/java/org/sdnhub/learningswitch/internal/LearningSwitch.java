@@ -2,7 +2,8 @@
 package org.sdnhub.learningswitch.internal;
 
 import org.sdnhub.learningswitch.ILearningSwitch;
-import org.sdnhub.learningswitch.LearningSwitchData;
+import org.sdnhub.learningswitch.MacToPortTable;
+import org.sdnhub.learningswitch.MacToPortTable.MacPortTableElem;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -39,18 +40,21 @@ import org.opendaylight.controller.sal.utils.NetUtils;
 import org.opendaylight.controller.switchmanager.ISwitchManager;
 
 public class LearningSwitch implements IListenDataPacket, ILearningSwitch {
-    private Map<UUID, LearningSwitchData> data;
+    private Map<UUID, MacToPortTable> data;
     protected static final Logger logger = LoggerFactory.getLogger(LearningSwitch.class);
 	private IDataPacketService dataPacketService = null;
 	private ISwitchManager switchManager = null;
 	private IFlowProgrammerService programmer = null;
+	private MacToPortTable macToPortTable = null;
+	
 	private Map<Long, NodeConnector> mac_to_port = new HashMap<Long, NodeConnector>();
-	private String function = "hub";
+	private String function = "switch";
 
 
     void init() {
         logger.info("Initializing Simple application");
-        data = new ConcurrentHashMap<UUID, LearningSwitchData>();
+        data = new ConcurrentHashMap<UUID, MacToPortTable>();
+        macToPortTable = new MacToPortTable();
     }
     void start() {
         logger.info("Simple application starting");
@@ -95,15 +99,7 @@ public class LearningSwitch implements IListenDataPacket, ILearningSwitch {
 		}
 	}
 
-	@Override
-	public String toggleSwitchHub() {
-		if (this.function.equals("hub")) {
-			this.function = "switch";
-		} else {
-			this.function = "hub";
-		}
-		return this.function;
-	}
+
 
 	private void floodPacket(RawPacket inPkt) {
         NodeConnector incoming_connector = inPkt.getIncomingNodeConnector();
@@ -167,13 +163,15 @@ public class LearningSwitch implements IListenDataPacket, ILearningSwitch {
     private void learnSourceMAC(Packet formattedPak, NodeConnector incoming_connector) {
         byte[] srcMAC = ((Ethernet)formattedPak).getSourceMACAddress();
         long srcMAC_val = BitBufferHelper.toNumber(srcMAC);
-        this.mac_to_port.put(srcMAC_val, incoming_connector);
+        //this.mac_to_port.put(srcMAC_val, incoming_connector);
+        this.macToPortTable.setNodeConnector(srcMAC_val, incoming_connector);
     }
 
     private NodeConnector knowDestinationMAC(Packet formattedPak) {
         byte[] dstMAC = ((Ethernet)formattedPak).getDestinationMACAddress();
         long dstMAC_val = BitBufferHelper.toNumber(dstMAC);
-        return this.mac_to_port.get(dstMAC_val) ;
+        //return this.mac_to_port.get(dstMAC_val) ;
+        return this.macToPortTable.getNodeConnector(dstMAC_val);
     }
 
     private boolean programFlow(Packet formattedPak, 
@@ -182,8 +180,8 @@ public class LearningSwitch implements IListenDataPacket, ILearningSwitch {
         byte[] dstMAC = ((Ethernet)formattedPak).getDestinationMACAddress();
 
         Match match = new Match();
-        match.setField( new MatchField(MatchType.IN_PORT, incoming_connector) );
-        match.setField( new MatchField(MatchType.DL_DST, dstMAC.clone()) );
+        match.setField(new MatchField(MatchType.IN_PORT, incoming_connector) );
+        match.setField(new MatchField(MatchType.DL_DST, dstMAC.clone()));
 
         List<Action> actions = new ArrayList<Action>();
         actions.add(new Output(outgoing_connector));
@@ -203,31 +201,37 @@ public class LearningSwitch implements IListenDataPacket, ILearningSwitch {
             return true;
         }
     }
-  
-     @Override
-    public UUID createData(LearningSwitchData datum) {
-        UUID uuid = UUID.randomUUID();
-        LearningSwitchData sData = new LearningSwitchData(uuid.toString(), datum.getFoo(), datum.getBar());
-        data.put(uuid, sData);
-        return uuid;
-    }
-    @Override
-    public LearningSwitchData readData(UUID uuid) {
-        return data.get(uuid);
-    }
-    @Override
-    public Map<UUID, LearningSwitchData> readData() {
-        return data;
-    }
-    @Override
-    public Status updateData(UUID uuid, LearningSwitchData datum) {
-        data.put(uuid, datum);
-        return new Status(StatusCode.SUCCESS);
-    }
-    @Override
-    public Status deleteData(UUID uuid) {
-        data.remove(uuid);
-        return new Status(StatusCode.SUCCESS);
-    }
     
+    @Override
+    public List< MacPortTableElem >  getData() 
+    {
+    	return macToPortTable.getMap();
+    }
+  
+//     @Override
+//    public UUID createData(MacToPortTable datum) {
+//        UUID uuid = UUID.randomUUID();
+//        MacToPortTable sData = new MacToPortTable(uuid.toString(), datum.getFoo(), datum.getBar());
+//        data.put(uuid, sData);
+//        return uuid;
+//    }
+//    @Override
+//    public MacToPortTable readData(UUID uuid) {
+//        return data.get(uuid);
+//    }
+//    @Override
+//    public Map<UUID, MacToPortTable> readData() {
+//        return data;
+//    }
+//    @Override
+//    public Status updateData(UUID uuid, MacToPortTable datum) {
+//        data.put(uuid, datum);
+//        return new Status(StatusCode.SUCCESS);
+//    }
+//    @Override
+//    public Status deleteData(UUID uuid) {
+//        data.remove(uuid);
+//        return new Status(StatusCode.SUCCESS);
+//    }
+//    
 }

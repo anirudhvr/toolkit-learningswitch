@@ -18,6 +18,7 @@
     <script data-main="/learningswitch/web/js/main" src="/js/ext/requirejs/require.js"></script>
   </head>
   <body>
-    <div id="main"></div>
+    <div id="mactablediv"></div>
+    <div id="flowtablediv"></div>
   </body>
 </html>

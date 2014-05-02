@@ -1,14 +1,14 @@
 define(['backbone', 'underscore'], function(Backbone, _) {
   var SimpleModel = Backbone.Model.extend({
-    idAttribute : 'uuid',
+    idAttribute : 'mac',
     defaults : {
-      foo : '',
-      bar : ''
+      mac : '',
+      nodeconnector : ''
     },
     initialize : function() {
     },
     setUrlRoot: function() {
-      this.urlRoot = '/learningswitch/northbound/learningswitch';
+      this.urlRoot = '/learningswitch/northbound/learningswitch/mactable';
     }
   });
   return SimpleModel;

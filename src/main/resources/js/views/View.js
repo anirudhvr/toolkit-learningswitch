@@ -8,42 +8,33 @@ define(
     '/js/ext/text/text.js!/learningswitch/web/js/templates/simple.html'
     ], function($, Backbone, _, SimpleCollection, SimpleModel, Template) {
       var View = Backbone.View.extend({
-        el: $("#main"),
+        el: $("#mactablediv"),
         initialize: function() {
           var self = this;
-          this.collection = new SimpleCollection();
-          this.collection.url = '/learningswitch/northbound/learningswitch';
-          this.collection.fetch({
+          this.maccollection = new SimpleCollection();
+          this.maccollection.url = '/learningswitch/northbound/learningswitch/mactable';
+          this.maccollection.fetch({
             success : function(call, response) {
-              self.render();
+              self.rendermactable();
             }
           });
         },
-        render: function() {
+        
+        rendermactable: function() {
           var that = this;
           var compiledTemplate = _.template(Template, 
           {
-            simple : that.collection.models
+            simple : that.maccollection.models
           });
           $(this.el).append($(compiledTemplate).html());
         },
+
         events : {
        	'click #simpleContainer button' : 'handleSimpleButton',
           'click #simpleTable tbody tr' : 'tableRowClicked'
         },
-        handleSwitchHubToggle : function(evt) {
-        	debugger;
-        	var self = this;
-            var $button = $(evt.currentTarget);
-            if ($button.attr('id') == 'toggleButton') {
-            	$.get( "/learningswitch/northbound/learningswitch/toggle", function( data ) {
-            		  $("#toggleButton").val(data);
-            		});
-            }
-        },
+        
         handleSimpleButton : function(evt) {
-
-        	debugger;
           var self = this;
           var $button = $(evt.currentTarget);
           if ($button.attr('id') == 'simpleButton') {

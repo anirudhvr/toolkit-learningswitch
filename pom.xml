@@ -25,15 +25,17 @@
         <configuration>
           <instructions>
             <Import-Package>
+              org.opendaylight.controller.forwardingrulesmanager.*,            
               org.opendaylight.toolkit.web,
               org.opendaylight.controller.sal.core,
+              org.opendaylight.controller.sal.reader.*,
               org.opendaylight.controller.sal.utils,
               org.opendaylight.controller.sal.packet,
               org.opendaylight.controller.sal.action,
               org.opendaylight.controller.sal.flowprogrammer,
               org.opendaylight.controller.sal.match,
               org.opendaylight.controller.sal.authorization,
-              org.opendaylight.controller.switchmanager,
+              org.opendaylight.controller.switchmanager.*,
               javax.annotation,
               javax.naming,
               javax.servlet,
@@ -125,6 +127,10 @@
  <dependency>
       <groupId>org.opendaylight.controller</groupId>
       <artifactId>switchmanager</artifactId>
+    </dependency>
+ <dependency>
+      <groupId>org.opendaylight.controller</groupId>
+      <artifactId>forwardingrulesmanager</artifactId>
     </dependency>
 
   </dependencies>

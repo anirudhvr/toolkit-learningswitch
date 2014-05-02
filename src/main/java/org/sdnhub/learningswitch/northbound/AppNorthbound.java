@@ -2,15 +2,22 @@
 package org.sdnhub.learningswitch.northbound;
 
 import org.sdnhub.learningswitch.ILearningSwitch;
-import org.sdnhub.learningswitch.LearningSwitchData;
+import org.sdnhub.learningswitch.MacToPortTable;
+import org.sdnhub.learningswitch.MacToPortTable.MacPortTableElem;
 import org.sdnhub.learningswitch.internal.LearningSwitch;
 import org.codehaus.enunciate.jaxrs.StatusCodes;
 import org.codehaus.enunciate.jaxrs.TypeHint;
+import org.opendaylight.controller.sal.reader.IReadService;
 import org.opendaylight.controller.sal.utils.ServiceHelper;
+import org.opendaylight.controller.sal.utils.HexEncode;
 
+import java.io.Serializable;
 import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 import java.util.UUID;
 
 import javax.ws.rs.Consumes;
@@ -27,13 +34,34 @@ import javax.ws.rs.core.Response;
 import javax.ws.rs.core.SecurityContext;
 import javax.ws.rs.core.UriInfo;
 
+import javax.xml.bind.annotation.XmlAccessType;
+import javax.xml.bind.annotation.XmlAccessorType;
+import javax.xml.bind.annotation.XmlElement;
+import javax.xml.bind.annotation.XmlRootElement;
+import javax.xml.bind.annotation.adapters.XmlAdapter;
+import javax.xml.bind.annotation.adapters.XmlJavaTypeAdapter;
+
 import org.codehaus.enunciate.jaxrs.ResponseCode;
 import org.opendaylight.controller.northbound.commons.RestMessages;
 import org.opendaylight.controller.northbound.commons.exception.ServiceUnavailableException;
 import org.opendaylight.controller.northbound.commons.exception.UnauthorizedException;
 import org.opendaylight.controller.northbound.commons.utils.NorthboundUtils;
 import org.opendaylight.controller.sal.authorization.Privilege;
+import org.opendaylight.controller.sal.core.NodeConnector;
 import org.opendaylight.controller.sal.utils.Status;
+import org.opendaylight.controller.switchmanager.ISwitchManager;
+import org.opendaylight.controller.forwardingrulesmanager.FlowConfig;
+import org.opendaylight.controller.forwardingrulesmanager.IForwardingRulesManager;
+import org.opendaylight.controller.switchmanager.ISwitchManager;
+import org.opendaylight.controller.switchmanager.Switch;
+import org.opendaylight.controller.sal.core.Node;
+import org.opendaylight.controller.sal.core.Description;
+import org.opendaylight.controller.sal.core.Name;
+import org.opendaylight.controller.switchmanager.SwitchConfig;
+import org.opendaylight.controller.sal.reader.FlowOnNode;
+
+
+
 
 /**
  * Northbound REST API
@@ -65,42 +93,23 @@ public class AppNorthbound {
     protected String getUserName() {
         return username;
     }
-    /**
-    *
-    * Switch-hub toggle GET REST API call
-    *
-    * @return A response string
-    *
-    * <pre>
-    * Example:
-    *
-    * Request URL:
-    * http://localhost:8080/learningswitch/northbound/toggle
-    *
-    * Response body in XML:
-    * &lt;?xml version="1.0" encoding="UTF-8" standalone="yes"?&gt;
-    * Sample Northbound API
-    *
-    * Response body in JSON:
-    * Sample Northbound API
-    * </pre>
-    */
-   @Path("/learningswitch/toggle")
-   @GET
-   @Produces({ MediaType.APPLICATION_JSON, MediaType.APPLICATION_XML })
-   @StatusCodes()   
-   public String toggleSwitchHub() {
-       if (!NorthboundUtils.isAuthorized(getUserName(), "default", Privilege.WRITE, this)) {
-           throw new UnauthorizedException("User is not authorized to perform this operation");
-       }
-       //LearningSwitch simple = (LearningSwitch) ServiceHelper.getInstance(LearningSwitch.class, "default", this);
-       ILearningSwitch simple = (ILearningSwitch) ServiceHelper.getInstance(ILearningSwitch.class, "default", this);
-       if (simple == null) {
-           throw new ServiceUnavailableException("Simple Service " + RestMessages.SERVICEUNAVAILABLE.toString());
-       }
-
-       return simple.toggleSwitchHub();
-   }
+   
+//   @Path("/learningswitch/toggle")
+//   @GET
+//   @Produces({ MediaType.APPLICATION_JSON, MediaType.APPLICATION_XML })
+//   @StatusCodes()   
+//   public String toggleSwitchHub() {
+//       if (!NorthboundUtils.isAuthorized(getUserName(), "default", Privilege.WRITE, this)) {
+//           throw new UnauthorizedException("User is not authorized to perform this operation");
+//       }
+//       //LearningSwitch simple = (LearningSwitch) ServiceHelper.getInstance(LearningSwitch.class, "default", this);
+//       ILearningSwitch simple = (ILearningSwitch) ServiceHelper.getInstance(ILearningSwitch.class, "default", this);
+//       if (simple == null) {
+//           throw new ServiceUnavailableException("Simple Service " + RestMessages.SERVICEUNAVAILABLE.toString());
+//       }
+//
+//       return simple.toggleSwitchHub();
+//   }
     
     
     
@@ -114,7 +123,7 @@ public class AppNorthbound {
      * Example:
      *
      * Request URL:
-     * http://localhost:8080/app/northbound/learningswitch
+     * http://localhost:8080/app/northbound/learningswitch/mactable
      *
      * Response body in XML:
      * &lt;?xml version="1.0" encoding="UTF-8" standalone="yes"?&gt;
@@ -124,11 +133,11 @@ public class AppNorthbound {
      * Sample Northbound API
      * </pre>
      */
-    @Path("/learningswitch")
+    @Path("/learningswitch/mactable")
     @GET
     @Produces({ MediaType.APPLICATION_JSON, MediaType.APPLICATION_XML })
     @StatusCodes()
-    public List<LearningSwitchData> getData() {
+    public List<MacPortTableElem>  getMacEntries() {
         if (!NorthboundUtils.isAuthorized(getUserName(), "default", Privilege.WRITE, this)) {
             throw new UnauthorizedException("User is not authorized to perform this operation");
         }
@@ -138,29 +147,120 @@ public class AppNorthbound {
             throw new ServiceUnavailableException("Simple Service " + RestMessages.SERVICEUNAVAILABLE.toString());
         }
 
-        Map<UUID, LearningSwitchData> sDataMap = simple.readData();
-        if (sDataMap != null) {
-            return new ArrayList<LearningSwitchData>(sDataMap.values());
-        }
-        return new ArrayList<LearningSwitchData>();
+        return simple.getData();
+    }
+    
+    /**
+    *
+    * Sample DELETE REST API call
+    *
+    * @return A response string
+    *
+    * <pre>
+    * Example:
+    *
+    * Request URL:
+    * http://localhost:8080/app/northbound/learningswitch/mactable
+    *
+    * Response body in XML:
+    * &lt;?xml version="1.0" encoding="UTF-8" standalone="yes"?&gt;
+    * Sample Northbound API
+    *
+    * Response body in JSON:
+    * Sample Northbound API
+    * </pre>
+    */
+   @Path("/learningswitch/mactable/{mac}")
+   @GET
+   @Produces({ MediaType.APPLICATION_JSON, MediaType.APPLICATION_XML })
+   @StatusCodes()
+   public Response deleteMacEntry() {
+       if (!NorthboundUtils.isAuthorized(getUserName(), "default", Privilege.WRITE, this)) {
+           throw new UnauthorizedException("User is not authorized to perform this operation");
+       }
+       ILearningSwitch simple = (ILearningSwitch) ServiceHelper.getInstance(ILearningSwitch.class, "default", this);
+       if (simple == null) {
+           throw new ServiceUnavailableException("Simple Service " + RestMessages.SERVICEUNAVAILABLE.toString());
+       }
+
+     return Response.status(Response.Status.OK).build();
+   }
+    
+    @XmlRootElement(name="NodeToFlowEntries")
+    class NodeToFlowEntries {
+    	@XmlElement(name="node")
+    	String node;
+    	@XmlElement(name="flows")
+    	List <String> flows;
+    	public NodeToFlowEntries() {
+    		flows = new ArrayList<String>();
+    	}
     }
 
-    @Path("/learningswitch/{uuid}")
+    @Path("/learningswitch/flowtable")
     @GET
     @Produces({ MediaType.APPLICATION_JSON, MediaType.APPLICATION_XML })
-    @TypeHint(LearningSwitchData.class)
     @StatusCodes()
-    public LearningSwitchData getData(@PathParam("uuid") String uuid) {
-        if (!NorthboundUtils.isAuthorized(getUserName(), "default", Privilege.WRITE, this)) {
-            throw new UnauthorizedException("User is not authorized to perform this operation");
-        }
-        ILearningSwitch simple = (ILearningSwitch) ServiceHelper.getGlobalInstance(ILearningSwitch.class, this);
-        if (simple == null) {
-            throw new ServiceUnavailableException("Simple Service " + RestMessages.SERVICEUNAVAILABLE.toString());
-        }
+    public List<NodeToFlowEntries> getNodeFlows() {
+    	  if (!NorthboundUtils.isAuthorized(getUserName(), "default", Privilege.WRITE, this)) {
+              throw new UnauthorizedException("User is not authorized to perform this operation");
+          }
+          ISwitchManager switchManager = (ISwitchManager) ServiceHelper.getInstance(ISwitchManager.class, "default",
+                this);
+        if (switchManager == null) {
+            return null;
+        }   
+        IForwardingRulesManager frm = (IForwardingRulesManager) ServiceHelper.getInstance(
+                IForwardingRulesManager.class, "default", this);
+        if (frm == null) {
+            return null;
+        }   
+        
+        IReadService rds = (IReadService) ServiceHelper.getInstance(IReadService.class, "default", this);
+        
+        List< NodeToFlowEntries > output = new ArrayList<NodeToFlowEntries>();
+    	//Map<String, Object> output = new HashMap<String, Object>(2);
 
-        return simple.readData(UUID.fromString(uuid));
+        for (Switch sw : switchManager.getNetworkDevices()) {
+        	Node node = sw.getNode();
+        	NodeToFlowEntries nfentries = new NodeToFlowEntries();
+
+        	nfentries.node = node.toString();
+        	
+        	//List<FlowConfig> staticFlowList = frm.getStaticFlows(node);
+        	List<FlowOnNode> flowList = rds.readAllFlows(node);
+        	for (FlowOnNode flow : flowList) {
+        		nfentries.flows.add(flow.getFlow().toString());
+        	}   
+        	output.add(nfentries);
+        }
+        return output;
     }
+    
+    private String getNodeDesc(Node node, ISwitchManager switchManager) {
+        Description desc = (Description) switchManager.getNodeProp(node, Description.propertyName);
+        String description = (desc == null) ? "" : desc.getValue();
+        return (description.isEmpty() || description.equalsIgnoreCase("none")) ? node.toString() : description;
+    }
+
+
+
+//    @Path("/learningswitch/{uuid}")
+//    @GET
+//    @Produces({ MediaType.APPLICATION_JSON, MediaType.APPLICATION_XML })
+//    @TypeHint(MacToPortTable.class)
+//    @StatusCodes()
+//    public MacToPortTable getData(@PathParam("uuid") String uuid) {
+//        if (!NorthboundUtils.isAuthorized(getUserName(), "default", Privilege.WRITE, this)) {
+//            throw new UnauthorizedException("User is not authorized to perform this operation");
+//        }
+//        ILearningSwitch simple = (ILearningSwitch) ServiceHelper.getGlobalInstance(ILearningSwitch.class, this);
+//        if (simple == null) {
+//            throw new ServiceUnavailableException("Simple Service " + RestMessages.SERVICEUNAVAILABLE.toString());
+//        }
+//
+//        return simple.readData(UUID.fromString(uuid));
+//    }
 
     /**
      *
@@ -182,32 +282,32 @@ public class AppNorthbound {
      * Sample Northbound API
      * </pre>
      */
-    @Path("/learningswitch")
-    @POST
-    @StatusCodes({ @ResponseCode(code = 201, condition = "Data Inserted successfully"),
-        @ResponseCode(code = 401, condition = "User not authorized to perform this operation"),
-        @ResponseCode(code = 500, condition = "Error inserting data"),
-        @ResponseCode(code = 503, condition = "One or more of service is unavailable")})
-    @Consumes({ MediaType.APPLICATION_JSON})
-    public Response createData(@TypeHint(LearningSwitchData.class) LearningSwitchData data) {
-        if (!NorthboundUtils.isAuthorized(getUserName(), "default", Privilege.WRITE, this)) {
-            throw new UnauthorizedException("User is not authorized to perform this operation");
-        }
-        ILearningSwitch simple = (ILearningSwitch) ServiceHelper.getGlobalInstance(ILearningSwitch.class, this);
-        if (simple == null) {
-            throw new ServiceUnavailableException("Simple Service " + RestMessages.SERVICEUNAVAILABLE.toString());
-        }
-        
-        UUID uuid = simple.createData(data);
-        if (uuid == null) {
-            return Response.status(Response.Status.INTERNAL_SERVER_ERROR).build();
-        }
-        return Response.status(Response.Status.CREATED)
-                .header("Location", String.format("%s/%s", _uriInfo.getAbsolutePath().toString(),
-                                                            uuid.toString()))
-                .entity(uuid.toString())
-                .build();
-    }
+//    @Path("/learningswitch")
+//    @POST
+//    @StatusCodes({ @ResponseCode(code = 201, condition = "Data Inserted successfully"),
+//        @ResponseCode(code = 401, condition = "User not authorized to perform this operation"),
+//        @ResponseCode(code = 500, condition = "Error inserting data"),
+//        @ResponseCode(code = 503, condition = "One or more of service is unavailable")})
+//    @Consumes({ MediaType.APPLICATION_JSON})
+//    public Response createData(@TypeHint(MacToPortTable.class) MacToPortTable data) {
+//        if (!NorthboundUtils.isAuthorized(getUserName(), "default", Privilege.WRITE, this)) {
+//            throw new UnauthorizedException("User is not authorized to perform this operation");
+//        }	
+//        ILearningSwitch simple = (ILearningSwitch) ServiceHelper.getGlobalInstance(ILearningSwitch.class, this);
+//        if (simple == null) {
+//            throw new ServiceUnavailableException("Simple Service " + RestMessages.SERVICEUNAVAILABLE.toString());
+//        }
+//        
+//        UUID uuid = simple.createData(data);
+//        if (uuid == null) {
+//            return Response.status(Response.Status.INTERNAL_SERVER_ERROR).build();
+//        }
+//        return Response.status(Response.Status.CREATED)
+//                .header("Location", String.format("%s/%s", _uriInfo.getAbsolutePath().toString(),
+//                                                            uuid.toString()))
+//                .entity(uuid.toString())
+//                .build();
+//    }
 
     /**
     *
@@ -229,28 +329,28 @@ public class AppNorthbound {
     * Sample Northbound API
     * </pre>
     */
-   @Path("/learningswitch/{uuid}")
-   @PUT
-   @StatusCodes({ @ResponseCode(code = 200, condition = "Data Updated successfully"),
-       @ResponseCode(code = 401, condition = "User not authorized to perform this operation"),
-       @ResponseCode(code = 500, condition = "Error updating data"),
-       @ResponseCode(code = 503, condition = "One or more of service is unavailable")})
-   @Consumes({ MediaType.APPLICATION_JSON})
-   public Response updateData(@PathParam("uuid") String uuid, @TypeHint(LearningSwitchData.class) LearningSwitchData data) {
-       if (!NorthboundUtils.isAuthorized(getUserName(), "default", Privilege.WRITE, this)) {
-           throw new UnauthorizedException("User is not authorized to perform this operation");
-       }
-       ILearningSwitch simple = (ILearningSwitch) ServiceHelper.getGlobalInstance(ILearningSwitch.class, this);
-       if (simple == null) {
-           throw new ServiceUnavailableException("Simple Service " + RestMessages.SERVICEUNAVAILABLE.toString());
-       }
-       
-       Status status = simple.updateData(UUID.fromString(uuid), data);
-       if (!status.isSuccess()) {
-           return Response.status(Response.Status.INTERNAL_SERVER_ERROR).build();
-       }
-       return Response.status(Response.Status.OK).build();
-   }
+//   @Path("/learningswitch/{uuid}")
+//   @PUT
+//   @StatusCodes({ @ResponseCode(code = 200, condition = "Data Updated successfully"),
+//       @ResponseCode(code = 401, condition = "User not authorized to perform this operation"),
+//       @ResponseCode(code = 500, condition = "Error updating data"),
+//       @ResponseCode(code = 503, condition = "One or more of service is unavailable")})
+//   @Consumes({ MediaType.APPLICATION_JSON})
+//   public Response updateData(@PathParam("uuid") String uuid, @TypeHint(MacToPortTable.class) MacToPortTable data) {
+//       if (!NorthboundUtils.isAuthorized(getUserName(), "default", Privilege.WRITE, this)) {
+//           throw new UnauthorizedException("User is not authorized to perform this operation");
+//       }
+//       ILearningSwitch simple = (ILearningSwitch) ServiceHelper.getGlobalInstance(ILearningSwitch.class, this);
+//       if (simple == null) {
+//           throw new ServiceUnavailableException("Simple Service " + RestMessages.SERVICEUNAVAILABLE.toString());
+//       }
+//       
+//       Status status = simple.updateData(UUID.fromString(uuid), data);
+//       if (!status.isSuccess()) {
+//           return Response.status(Response.Status.INTERNAL_SERVER_ERROR).build();
+//       }
+//       return Response.status(Response.Status.OK).build();
+//   }
 
    /**
    *
@@ -272,27 +372,27 @@ public class AppNorthbound {
    * Sample Northbound API
    * </pre>
    */
-  @Path("/learningswitch/{uuid}")
-  @DELETE
-  @StatusCodes({ @ResponseCode(code = 200, condition = "Data Deleted successfully"),
-                 @ResponseCode(code = 401, condition = "User not authorized to perform this operation"),
-                 @ResponseCode(code = 500, condition = "Error deleting data"),
-                 @ResponseCode(code = 503, condition = "One or more of service is unavailable")})
-  @Consumes({ MediaType.APPLICATION_JSON})
-  public Response updateData(@PathParam("uuid") String uuid) {
-      if (!NorthboundUtils.isAuthorized(getUserName(), "default", Privilege.WRITE, this)) {
-          throw new UnauthorizedException("User is not authorized to perform this operation");
-      }
-      ILearningSwitch simple = (ILearningSwitch) ServiceHelper.getGlobalInstance(ILearningSwitch.class, this);
-      if (simple == null) {
-          throw new ServiceUnavailableException("Simple Service " + RestMessages.SERVICEUNAVAILABLE.toString());
-      }
-      
-      Status status = simple.deleteData(UUID.fromString(uuid));
-      if (!status.isSuccess()) {
-          return Response.status(Response.Status.INTERNAL_SERVER_ERROR).build();
-      }
-      return Response.status(Response.Status.OK).build();
-  }
+//  @Path("/learningswitch/{uuid}")
+//  @DELETE
+//  @StatusCodes({ @ResponseCode(code = 200, condition = "Data Deleted successfully"),
+//                 @ResponseCode(code = 401, condition = "User not authorized to perform this operation"),
+//                 @ResponseCode(code = 500, condition = "Error deleting data"),
+//                 @ResponseCode(code = 503, condition = "One or more of service is unavailable")})
+//  @Consumes({ MediaType.APPLICATION_JSON})
+//  public Response updateData(@PathParam("uuid") String uuid) {
+//      if (!NorthboundUtils.isAuthorized(getUserName(), "default", Privilege.WRITE, this)) {
+//          throw new UnauthorizedException("User is not authorized to perform this operation");
+//      }
+//      ILearningSwitch simple = (ILearningSwitch) ServiceHelper.getGlobalInstance(ILearningSwitch.class, this);
+//      if (simple == null) {
+//          throw new ServiceUnavailableException("Simple Service " + RestMessages.SERVICEUNAVAILABLE.toString());
+//      }
+//      
+//      Status status = simple.deleteData(UUID.fromString(uuid));
+//      if (!status.isSuccess()) {
+//          return Response.status(Response.Status.INTERNAL_SERVER_ERROR).build();
+//      }
+//      return Response.status(Response.Status.OK).build();
+//  }
 
 }

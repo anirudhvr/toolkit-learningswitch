@@ -6,7 +6,7 @@ define(
     ], function(Backbone, _, SimpleModel) {
       var SimpleCollection = Backbone.Collection.extend({
         model : SimpleModel,
-        url : '/learningswitch/northbound/learningswitch'
+        url : '/learningswitch/northbound/learningswitch/mactable'
       });
       return SimpleCollection;
     });
