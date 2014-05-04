@@ -1,5 +1,5 @@
 
-package org.sdnhub.learningswitch;
+package org.sdnhub.odl.learningswitch;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;

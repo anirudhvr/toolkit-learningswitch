@@ -1,4 +1,4 @@
-package org.sdnhub.learningswitch.web;
+package org.sdnhub.odl.learningswitch.web;
 
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;

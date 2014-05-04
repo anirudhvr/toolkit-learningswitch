@@ -8,10 +8,10 @@
     <relativePath>../common</relativePath>
   </parent>
 
-  <artifactId>learningswitch</artifactId>
 
-  <groupId>org.sdnhub.learningswitch</groupId>
-  <version>1.0-SNAPSHOT</version>
+  <groupId>org.sdnhub.odl</groupId>
+  <artifactId>learningswitch</artifactId>
+  <version>0.1.0-SNAPSHOT</version>
 
   <packaging>bundle</packaging>
 
@@ -94,7 +94,7 @@
             <Web-ContextPath>/learningswitch</Web-ContextPath>
             <Jaxrs-Resources>,${classes;ANNOTATION;javax.ws.rs.Path}</Jaxrs-Resources>
             <Bundle-Activator>
-              org.sdnhub.learningswitch.internal.Activator
+              org.sdnhub.odl.learningswitch.internal.Activator
           	</Bundle-Activator>
           </instructions>
           <manifestLocation>${project.basedir}/src/main/resources/META-INF</manifestLocation>

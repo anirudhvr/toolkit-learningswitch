@@ -1,9 +1,9 @@
 
-package org.sdnhub.learningswitch.internal;
+package org.sdnhub.odl.learningswitch.internal;
 
-import org.sdnhub.learningswitch.ILearningSwitch;
-import org.sdnhub.learningswitch.MacToPortTable;
-import org.sdnhub.learningswitch.MacToPortTable.MacPortTableElem;
+import org.sdnhub.odl.learningswitch.ILearningSwitch;
+import org.sdnhub.odl.learningswitch.MacToPortTable;
+import org.sdnhub.odl.learningswitch.MacToPortTable.MacPortTableElem;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 

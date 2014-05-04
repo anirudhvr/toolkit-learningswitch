@@ -1,12 +1,12 @@
 
-package org.sdnhub.learningswitch.internal;
+package org.sdnhub.odl.learningswitch.internal;
 
 import java.util.Dictionary;
 import java.util.Hashtable;
 import java.util.Set;
 
 import org.apache.felix.dm.Component;
-import org.sdnhub.learningswitch.ILearningSwitch;
+import org.sdnhub.odl.learningswitch.ILearningSwitch;
 import org.opendaylight.controller.sal.core.ComponentActivatorAbstractBase;
 import org.opendaylight.controller.sal.flowprogrammer.IFlowProgrammerService;
 import org.slf4j.Logger;

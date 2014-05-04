@@ -1,10 +1,10 @@
 
-package org.sdnhub.learningswitch.northbound;
+package org.sdnhub.odl.learningswitch.northbound;
 
-import org.sdnhub.learningswitch.ILearningSwitch;
-import org.sdnhub.learningswitch.MacToPortTable;
-import org.sdnhub.learningswitch.MacToPortTable.MacPortTableElem;
-import org.sdnhub.learningswitch.internal.LearningSwitch;
+import org.sdnhub.odl.learningswitch.ILearningSwitch;
+import org.sdnhub.odl.learningswitch.MacToPortTable;
+import org.sdnhub.odl.learningswitch.MacToPortTable.MacPortTableElem;
+import org.sdnhub.odl.learningswitch.internal.LearningSwitch;
 import org.codehaus.enunciate.jaxrs.StatusCodes;
 import org.codehaus.enunciate.jaxrs.TypeHint;
 import org.opendaylight.controller.sal.reader.IReadService;
