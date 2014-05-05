@@ -100,9 +100,6 @@ public class LearningSwitch implements IListenDataPacket, ILearningSwitch {
         NodeConnector incoming_connector = inPkt.getIncomingNodeConnector();
         Node incoming_node = incoming_connector.getNode();
         
-        logger.warn("Nodeconnector toString: {}", incoming_connector.hashCode());
-        logger.warn("Node toString: {}", incoming_node.hashCode());
-
         Set<NodeConnector> nodeConnectors =
                 this.switchManager.getUpNodeConnectors(incoming_node);
 
@@ -160,9 +157,6 @@ public class LearningSwitch implements IListenDataPacket, ILearningSwitch {
         long srcMAC_val = BitBufferHelper.toNumber(srcMAC);
         //this.mac_to_port.put(srcMAC_val, incoming_connector);
         this.macToPortTable.setNodeConnector(srcMAC_val, incoming_connector);
-        System.out.println("Adding MAC: " + HexEncode.longToHexString(srcMAC_val) + " - " +
-		    		incoming_connector.toString());
-
     }
 
     private NodeConnector getDestinationPort(Ethernet etherPak) {
