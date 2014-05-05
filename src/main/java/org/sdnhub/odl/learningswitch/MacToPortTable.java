@@ -20,7 +20,7 @@ import org.opendaylight.controller.sal.core.NodeConnector;
 @XmlAccessorType(XmlAccessType.NONE)
 public class MacToPortTable {
     
-	public Map<Long, NodeConnector> table;
+	private Map<Long, NodeConnector> table;
 	
 	public NodeConnector getNodeConnector(Long mac) {
 		return table.get(mac);
@@ -84,6 +84,13 @@ public class MacToPortTable {
 //        this.bar = bar;
 //    }
 //    
-    
+
+	public String toString() {
+		String str = "MAC Table: " + table.size() + " entries\n";
+		for (Map.Entry<Long, NodeConnector> entry : table.entrySet()) 
+		    str += HexEncode.longToHexString(entry.getKey()) + " - " +
+		    		entry.getValue().toString() + "\n";
+		return str;
+	}
 }
 
