@@ -13,6 +13,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.opendaylight.controller.sal.packet.IListenDataPacket;
 import org.opendaylight.controller.sal.packet.IDataPacketService;
+import org.opendaylight.controller.switchmanager.IInventoryListener;
 import org.opendaylight.controller.switchmanager.ISwitchManager;
 
 
@@ -98,7 +99,9 @@ public class Activator extends ComponentActivatorAbstractBase {
         	   // export the services
             Dictionary<String, String> props = new Hashtable<String, String>();
             props.put("salListenerName", "LearningSwitch");
-            c.setInterface(new String[] { IListenDataPacket.class.getName(), ILearningSwitch.class.getName() }, props);
+            c.setInterface(new String[] {   IListenDataPacket.class.getName(), 
+                                            ILearningSwitch.class.getName(),
+                                            IInventoryListener.class.getName()}, props);
 
             // register dependent modules
             c.add(createContainerServiceDependency(containerName).setService(

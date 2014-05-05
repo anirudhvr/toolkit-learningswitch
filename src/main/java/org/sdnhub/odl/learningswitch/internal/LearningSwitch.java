@@ -22,6 +22,8 @@ import org.opendaylight.controller.sal.action.Output;
 import org.opendaylight.controller.sal.core.ConstructionException;
 import org.opendaylight.controller.sal.core.Node;
 import org.opendaylight.controller.sal.core.NodeConnector;
+import org.opendaylight.controller.sal.core.Property;
+import org.opendaylight.controller.sal.core.UpdateType;
 import org.opendaylight.controller.sal.flowprogrammer.Flow;
 import org.opendaylight.controller.sal.flowprogrammer.IFlowProgrammerService;
 import org.opendaylight.controller.sal.match.Match;
@@ -37,18 +39,19 @@ import org.opendaylight.controller.sal.packet.UDP;
 import org.opendaylight.controller.sal.packet.Packet;
 import org.opendaylight.controller.sal.packet.PacketResult;
 import org.opendaylight.controller.sal.packet.RawPacket;
+import org.opendaylight.controller.switchmanager.IInventoryListener;
 import org.opendaylight.controller.switchmanager.ISwitchManager;
 
-public class LearningSwitch implements IListenDataPacket, ILearningSwitch {
+public class LearningSwitch implements IListenDataPacket, ILearningSwitch, IInventoryListener {
     private Map<UUID, MacToPortTable> data;
     protected static final Logger logger = LoggerFactory.getLogger(LearningSwitch.class);
-	private IDataPacketService dataPacketService = null;
-	private ISwitchManager switchManager = null;
-	private IFlowProgrammerService programmer = null;
-	private MacToPortTable macToPortTable = null;
-	
-	private Map<Long, NodeConnector> mac_to_port = new HashMap<Long, NodeConnector>();
-	private String function = "switch";
+    private IDataPacketService dataPacketService = null;
+    private ISwitchManager switchManager = null;
+    private IFlowProgrammerService programmer = null;
+    private MacToPortTable macToPortTable = null;
+
+    //private Map<Long, NodeConnector> mac_to_port = new HashMap<Long, NodeConnector>();
+    private String function = "switch";
 
     void init() {
         logger.info("Initializing Simple application");
@@ -62,52 +65,68 @@ public class LearningSwitch implements IListenDataPacket, ILearningSwitch {
     void stop() {
         logger.info("Simple application stopping");
     }
-	
-	void setDataPacketService(IDataPacketService s) {
-		this.dataPacketService = s;
-	}
 
-	void unsetDataPacketService(IDataPacketService s) {
-		if (this.dataPacketService == s) {
-			this.dataPacketService = null;
-		}
-	}
+    void setDataPacketService(IDataPacketService s) {
+        this.dataPacketService = s;
+    }
 
-	public void setFlowProgrammerService(IFlowProgrammerService s)
-	{
-		this.programmer = s;
-	}
+    void unsetDataPacketService(IDataPacketService s) {
+        if (this.dataPacketService == s) {
+            this.dataPacketService = null;
+        }
+    }
 
-	public void unsetFlowProgrammerService(IFlowProgrammerService s) {
-		if (this.programmer == s) {
-			this.programmer = null;
-		}
-	}
-	
-	void setSwitchManager(ISwitchManager s) {
-		logger.debug("SwitchManager set");
-		this.switchManager = s;
-	}
+    public void setFlowProgrammerService(IFlowProgrammerService s)
+    {
+        this.programmer = s;
+    }
 
-	void unsetSwitchManager(ISwitchManager s) {
-		if (this.switchManager == s) {
-			logger.debug("SwitchManager removed!");
-			this.switchManager = null;
-		}
-	}
+    public void unsetFlowProgrammerService(IFlowProgrammerService s) {
+        if (this.programmer == s) {
+            this.programmer = null;
+        }
+    }
 
-	private void floodPacket(RawPacket inPkt) {
+    public void notifyNode(Node node, UpdateType type,
+            Map<String, Property> propMap) {
+        if (type == UpdateType.ADDED)
+            this.macToPortTable.initNode(node);
+        else if (type == UpdateType.REMOVED)
+            this.macToPortTable.clearNode(node);
+    }
+
+    public void notifyNodeConnector(NodeConnector nodeConnector,
+            UpdateType type, Map<String, Property> propMap) {
+        if (type == UpdateType.ADDED)
+            this.macToPortTable.initNodeConnector(nodeConnector);
+        else if (type == UpdateType.REMOVED)
+            this.macToPortTable.clearNodeConnector(nodeConnector);
+    }
+
+    void setSwitchManager(ISwitchManager s) {
+        logger.debug("SwitchManager set");
+        this.switchManager = s;
+    }
+
+    void unsetSwitchManager(ISwitchManager s) {
+        if (this.switchManager == s) {
+            logger.debug("SwitchManager removed!");
+            this.switchManager = null;
+        }
+    }
+
+    private void floodPacket(RawPacket inPkt) {
         NodeConnector incoming_connector = inPkt.getIncomingNodeConnector();
         Node incoming_node = incoming_connector.getNode();
-        
+
         Set<NodeConnector> nodeConnectors =
                 this.switchManager.getUpNodeConnectors(incoming_node);
 
-        for (NodeConnector p : nodeConnectors) {
-            if (!p.equals(incoming_connector) && (p.getType() != NodeConnector.NodeConnectorIDType.SWSTACK)) {
+        for (NodeConnector nc : nodeConnectors) {
+            if (!nc.equals(incoming_connector) && (nc.getType() != NodeConnector.NodeConnectorIDType.SWSTACK)) {
                 try {
                     RawPacket destPkt = new RawPacket(inPkt);
-                    destPkt.setOutgoingNodeConnector(p);
+                    destPkt.setOutgoingNodeConnector(nc);
                     this.dataPacketService.transmitDataPacket(destPkt);
                 } catch (ConstructionException e2) {
                     continue;
@@ -131,7 +150,7 @@ public class LearningSwitch implements IListenDataPacket, ILearningSwitch {
         Ethernet etherPak = (Ethernet)formattedPak;
         if (etherPak.getEtherType() == 0x88cc)
             return PacketResult.IGNORED;
-        	
+
         // Hub implementation
         if (function.equals("hub")) {
             floodPacket(inPkt);
@@ -139,7 +158,8 @@ public class LearningSwitch implements IListenDataPacket, ILearningSwitch {
             NodeConnector incoming_connector = inPkt.getIncomingNodeConnector();
             learnSourceMAC(etherPak, incoming_connector);
 
-            NodeConnector outgoing_connector = getDestinationPort(etherPak);
+            NodeConnector outgoing_connector = lookupDestinationPort(
+                    incoming_connector.getNode(), etherPak);
             if (outgoing_connector == null) {
                 floodPacket(inPkt);
             } else {
@@ -156,18 +176,18 @@ public class LearningSwitch implements IListenDataPacket, ILearningSwitch {
         byte[] srcMAC = etherPak.getSourceMACAddress();
         long srcMAC_val = BitBufferHelper.toNumber(srcMAC);
         //this.mac_to_port.put(srcMAC_val, incoming_connector);
-        this.macToPortTable.setNodeConnector(srcMAC_val, incoming_connector);
+        this.macToPortTable.setNodeConnector(incoming_connector, srcMAC_val);
     }
 
-    private NodeConnector getDestinationPort(Ethernet etherPak) {
+    private NodeConnector lookupDestinationPort(Node node, Ethernet etherPak) {
         byte[] dstMAC = etherPak.getDestinationMACAddress();
         long dstMAC_val = BitBufferHelper.toNumber(dstMAC);
         //return this.mac_to_port.get(dstMAC_val) ;
-        return this.macToPortTable.getNodeConnector(dstMAC_val);
+        return this.macToPortTable.getNodeConnector(node, dstMAC_val);
     }
 
-    private boolean programFlow(Ethernet etherPak, 
-            NodeConnector incoming_connector, 
+    private boolean programFlow(Ethernet etherPak,
+            NodeConnector incoming_connector,
             NodeConnector outgoing_connector) {
         byte[] dstMAC = etherPak.getDestinationMACAddress();
 
@@ -193,13 +213,13 @@ public class LearningSwitch implements IListenDataPacket, ILearningSwitch {
             return true;
         }
     }
-    
+
     @Override
-    public List< MacPortTableElem >  getData() 
+    public List< MacPortTableElem >  getData()
     {
-    	return macToPortTable.getMap();
+        return macToPortTable.getMap();
     }
-  
+
 //     @Override
 //    public UUID createData(MacToPortTable datum) {
 //        UUID uuid = UUID.randomUUID();
@@ -225,5 +245,5 @@ public class LearningSwitch implements IListenDataPacket, ILearningSwitch {
 //        data.remove(uuid);
 //        return new Status(StatusCode.SUCCESS);
 //    }
-//    
+//
 }
