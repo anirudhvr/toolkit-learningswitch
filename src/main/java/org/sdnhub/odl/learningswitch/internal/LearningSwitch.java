@@ -15,8 +15,8 @@ import java.util.Set;
 import java.util.UUID;
 import java.util.Map;
 
+import org.opendaylight.controller.sal.utils.HexEncode;
 import org.opendaylight.controller.sal.utils.Status;
-import org.opendaylight.controller.sal.utils.StatusCode;
 import org.opendaylight.controller.sal.action.Action;
 import org.opendaylight.controller.sal.action.Output;
 import org.opendaylight.controller.sal.core.ConstructionException;
@@ -32,11 +32,11 @@ import org.opendaylight.controller.sal.packet.Ethernet;
 import org.opendaylight.controller.sal.packet.IDataPacketService;
 import org.opendaylight.controller.sal.packet.IListenDataPacket;
 import org.opendaylight.controller.sal.packet.IPv4;
+import org.opendaylight.controller.sal.packet.TCP;
+import org.opendaylight.controller.sal.packet.UDP;
 import org.opendaylight.controller.sal.packet.Packet;
 import org.opendaylight.controller.sal.packet.PacketResult;
 import org.opendaylight.controller.sal.packet.RawPacket;
-import org.opendaylight.controller.sal.packet.UDP;
-import org.opendaylight.controller.sal.utils.NetUtils;
 import org.opendaylight.controller.switchmanager.ISwitchManager;
 
 public class LearningSwitch implements IListenDataPacket, ILearningSwitch {
@@ -49,7 +49,6 @@ public class LearningSwitch implements IListenDataPacket, ILearningSwitch {
 	
 	private Map<Long, NodeConnector> mac_to_port = new HashMap<Long, NodeConnector>();
 	private String function = "switch";
-
 
     void init() {
         logger.info("Initializing Simple application");
@@ -84,8 +83,6 @@ public class LearningSwitch implements IListenDataPacket, ILearningSwitch {
 			this.programmer = null;
 		}
 	}
-
-	
 	
 	void setSwitchManager(ISwitchManager s) {
 		logger.debug("SwitchManager set");
@@ -99,22 +96,18 @@ public class LearningSwitch implements IListenDataPacket, ILearningSwitch {
 		}
 	}
 
-
-
 	private void floodPacket(RawPacket inPkt) {
         NodeConnector incoming_connector = inPkt.getIncomingNodeConnector();
         Node incoming_node = incoming_connector.getNode();
         
         logger.warn("Nodeconnector toString: {}", incoming_connector.hashCode());
         logger.warn("Node toString: {}", incoming_node.hashCode());
-        
-
 
         Set<NodeConnector> nodeConnectors =
                 this.switchManager.getUpNodeConnectors(incoming_node);
 
         for (NodeConnector p : nodeConnectors) {
-            if (!p.equals(incoming_connector)) {
+            if (!p.equals(incoming_connector) && (p.getType() != NodeConnector.NodeConnectorIDType.SWSTACK)) {
                 try {
                     RawPacket destPkt = new RawPacket(inPkt);
                     destPkt.setOutgoingNodeConnector(p);
@@ -126,32 +119,34 @@ public class LearningSwitch implements IListenDataPacket, ILearningSwitch {
         }
     }
 
-
-
     @Override
     public PacketResult receiveDataPacket(RawPacket inPkt) {
         if (inPkt == null) {
             return PacketResult.IGNORED;
         }
 
-        NodeConnector incoming_connector = inPkt.getIncomingNodeConnector();
+        Packet formattedPak = this.dataPacketService.decodeDataPacket(inPkt);
+        if (!(formattedPak instanceof Ethernet)) {
+            return PacketResult.IGNORED;
+        }
 
+        //Ignore LLDP packets. They should never be flooded out
+        Ethernet etherPak = (Ethernet)formattedPak;
+        if (etherPak.getEtherType() == 0x88cc)
+            return PacketResult.IGNORED;
+        	
         // Hub implementation
         if (function.equals("hub")) {
             floodPacket(inPkt);
         } else {
-            Packet formattedPak = this.dataPacketService.decodeDataPacket(inPkt);
-            if (!(formattedPak instanceof Ethernet)) {
-                return PacketResult.IGNORED;
-            }
+            NodeConnector incoming_connector = inPkt.getIncomingNodeConnector();
+            learnSourceMAC(etherPak, incoming_connector);
 
-            learnSourceMAC(formattedPak, incoming_connector);
-            NodeConnector outgoing_connector = 
-                knowDestinationMAC(formattedPak);
+            NodeConnector outgoing_connector = getDestinationPort(etherPak);
             if (outgoing_connector == null) {
                 floodPacket(inPkt);
             } else {
-                if (!programFlow(formattedPak, incoming_connector,
+                if (!programFlow(etherPak, incoming_connector,
                             outgoing_connector)) {
                     return PacketResult.IGNORED;
                 }
@@ -160,24 +155,27 @@ public class LearningSwitch implements IListenDataPacket, ILearningSwitch {
         return PacketResult.CONSUME;
     }
 
-    private void learnSourceMAC(Packet formattedPak, NodeConnector incoming_connector) {
-        byte[] srcMAC = ((Ethernet)formattedPak).getSourceMACAddress();
+    private void learnSourceMAC(Ethernet etherPak, NodeConnector incoming_connector) {
+        byte[] srcMAC = etherPak.getSourceMACAddress();
         long srcMAC_val = BitBufferHelper.toNumber(srcMAC);
         //this.mac_to_port.put(srcMAC_val, incoming_connector);
         this.macToPortTable.setNodeConnector(srcMAC_val, incoming_connector);
+        System.out.println("Adding MAC: " + HexEncode.longToHexString(srcMAC_val) + " - " +
+		    		incoming_connector.toString());
+
     }
 
-    private NodeConnector knowDestinationMAC(Packet formattedPak) {
-        byte[] dstMAC = ((Ethernet)formattedPak).getDestinationMACAddress();
+    private NodeConnector getDestinationPort(Ethernet etherPak) {
+        byte[] dstMAC = etherPak.getDestinationMACAddress();
         long dstMAC_val = BitBufferHelper.toNumber(dstMAC);
         //return this.mac_to_port.get(dstMAC_val) ;
         return this.macToPortTable.getNodeConnector(dstMAC_val);
     }
 
-    private boolean programFlow(Packet formattedPak, 
+    private boolean programFlow(Ethernet etherPak, 
             NodeConnector incoming_connector, 
             NodeConnector outgoing_connector) {
-        byte[] dstMAC = ((Ethernet)formattedPak).getDestinationMACAddress();
+        byte[] dstMAC = etherPak.getDestinationMACAddress();
 
         Match match = new Match();
         match.setField(new MatchField(MatchType.IN_PORT, incoming_connector) );
