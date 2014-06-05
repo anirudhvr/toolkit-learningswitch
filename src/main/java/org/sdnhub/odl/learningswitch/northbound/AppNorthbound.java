@@ -2,8 +2,8 @@
 package org.sdnhub.odl.learningswitch.northbound;
 
 import org.sdnhub.odl.learningswitch.ILearningSwitch;
-import org.sdnhub.odl.learningswitch.MacToPortTable;
-import org.sdnhub.odl.learningswitch.MacToPortTable.MacPortTableElem;
+import org.sdnhub.odl.learningswitch.Table;
+import org.sdnhub.odl.learningswitch.MacTable.MacPortTableElem;
 import org.sdnhub.odl.learningswitch.internal.LearningSwitch;
 import org.codehaus.enunciate.jaxrs.StatusCodes;
 import org.codehaus.enunciate.jaxrs.TypeHint;
@@ -93,23 +93,85 @@ public class AppNorthbound {
     protected String getUserName() {
         return username;
     }
+    
+    
+    /**
+    *
+    * Get current function (hub or switch) - GET REST API call
+    *
+    * @return A response string
+    *
+    * <pre>
+    * Example:
+    *
+    * Request URL:
+    * http://localhost:8080/app/northbound/learningswitch/function/
+    *
+    * Response body in XML:
+    * &lt;?xml version="1.0" encoding="UTF-8" standalone="yes"?&gt;
+    * switch
+    *
+    * Response body in JSON:
+    * { "function" : "hub"}
+    * </pre>
+    */
+   @Path("/learningswitch/function/")
+   @GET
+   @Produces({ MediaType.APPLICATION_JSON, MediaType.APPLICATION_XML })
+   @StatusCodes()   
+   public String getFunction() {
+       if (!NorthboundUtils.isAuthorized(getUserName(), "default", Privilege.WRITE, this)) {
+           throw new UnauthorizedException("User is not authorized to perform this operation");
+       }
+       //LearningSwitch simple = (LearningSwitch) ServiceHelper.getInstance(LearningSwitch.class, "default", this);
+       ILearningSwitch simple = (ILearningSwitch) ServiceHelper.getInstance(ILearningSwitch.class, "default", this);
+       if (simple == null) {
+           throw new ServiceUnavailableException("LearningSwitch Service " + RestMessages.SERVICEUNAVAILABLE.toString());
+       }
+
+       return simple.getFunction();
+   }
    
-//   @Path("/learningswitch/toggle")
-//   @GET
-//   @Produces({ MediaType.APPLICATION_JSON, MediaType.APPLICATION_XML })
-//   @StatusCodes()   
-//   public String toggleSwitchHub() {
-//       if (!NorthboundUtils.isAuthorized(getUserName(), "default", Privilege.WRITE, this)) {
-//           throw new UnauthorizedException("User is not authorized to perform this operation");
-//       }
-//       //LearningSwitch simple = (LearningSwitch) ServiceHelper.getInstance(LearningSwitch.class, "default", this);
-//       ILearningSwitch simple = (ILearningSwitch) ServiceHelper.getInstance(ILearningSwitch.class, "default", this);
-//       if (simple == null) {
-//           throw new ServiceUnavailableException("Simple Service " + RestMessages.SERVICEUNAVAILABLE.toString());
-//       }
-//
-//       return simple.toggleSwitchHub();
-//   }
+   /**
+   *
+   * Set current function (hub or switch) - GET REST API call
+   *
+   * @return A response string
+   *
+   * <pre>
+   * Example:
+   *
+   * Request URL:
+   * http://localhost:8080/app/northbound/learningswitch/function/{function}
+   *
+   * Response body in XML:
+   * &lt;?xml version="1.0" encoding="UTF-8" standalone="yes"?&gt;
+   * switch
+   *
+   * Response body in JSON:
+   * { "function" : "hub"}
+   * </pre>
+   */
+  @Path("/learningswitch/function/{name}")
+  @GET
+  @Produces({ MediaType.APPLICATION_JSON, MediaType.APPLICATION_XML })
+  @StatusCodes()   
+  public Response setFunction(@PathParam("name") String functionName) {
+      if (!NorthboundUtils.isAuthorized(getUserName(), "default", Privilege.WRITE, this)) {
+          throw new UnauthorizedException("User is not authorized to perform this operation");
+      }
+      //LearningSwitch simple = (LearningSwitch) ServiceHelper.getInstance(LearningSwitch.class, "default", this);
+      ILearningSwitch simple = (ILearningSwitch) ServiceHelper.getInstance(ILearningSwitch.class, "default", this);
+      if (simple == null) {
+          throw new ServiceUnavailableException("LearningSwitch Service " + RestMessages.SERVICEUNAVAILABLE.toString());
+      }
+
+      if (simple.setFunction(functionName) == true) {
+    	  return Response.status(Response.Status.OK).build();
+      } else {
+    	  return Response.status(Response.Status.NOT_FOUND).build();
+      }
+  }
     
     
     
@@ -133,11 +195,11 @@ public class AppNorthbound {
      * Sample Northbound API
      * </pre>
      */
-    @Path("/learningswitch/mactable")
+    @Path("/learningswitch/table")
     @GET
     @Produces({ MediaType.APPLICATION_JSON, MediaType.APPLICATION_XML })
     @StatusCodes()
-    public List<MacPortTableElem>  getMacEntries() {
+    public Table  getTableEntries() {
         if (!NorthboundUtils.isAuthorized(getUserName(), "default", Privilege.WRITE, this)) {
             throw new UnauthorizedException("User is not authorized to perform this operation");
         }
@@ -170,21 +232,6 @@ public class AppNorthbound {
     * Sample Northbound API
     * </pre>
     */
-   @Path("/learningswitch/mactable/{mac}")
-   @GET
-   @Produces({ MediaType.APPLICATION_JSON, MediaType.APPLICATION_XML })
-   @StatusCodes()
-   public Response deleteMacEntry() {
-       if (!NorthboundUtils.isAuthorized(getUserName(), "default", Privilege.WRITE, this)) {
-           throw new UnauthorizedException("User is not authorized to perform this operation");
-       }
-       ILearningSwitch simple = (ILearningSwitch) ServiceHelper.getInstance(ILearningSwitch.class, "default", this);
-       if (simple == null) {
-           throw new ServiceUnavailableException("Simple Service " + RestMessages.SERVICEUNAVAILABLE.toString());
-       }
-
-     return Response.status(Response.Status.OK).build();
-   }
     
     @XmlRootElement(name="NodeToFlowEntries")
     class NodeToFlowEntries {

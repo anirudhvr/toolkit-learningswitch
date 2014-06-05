@@ -18,6 +18,9 @@ define(
               self.rendermactable();
             }
           });
+
+  
+              	  
         },
         
         rendermactable: function() {
@@ -74,6 +77,8 @@ define(
           $('#simpleTable tbody tr.selected').removeClass('selected');
           var $tr = $(evt.currentTarget);
           $tr.addClass('selected');
+          
+          
         },
         updateView : function() {
           $('#simpleContainer').remove();

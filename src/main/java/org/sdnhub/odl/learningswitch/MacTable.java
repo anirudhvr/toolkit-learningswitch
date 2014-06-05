@@ -22,7 +22,7 @@ import org.opendaylight.controller.sal.core.NodeConnector;
 
 @XmlRootElement(name="MacToPortTable")
 @XmlAccessorType(XmlAccessType.NONE)
-public class MacToPortTable {
+public class MacTable {
 
     // For each switch port, track list of learned MACs
     private Map<NodeConnector, Set<Long>> table;
@@ -44,10 +44,6 @@ public class MacToPortTable {
             table.put(nc, new HashSet<Long>(Collections.singleton(mac)));
     }
 
-    public void initNodeConnector(NodeConnector nc) {
-        //Nothing to do right now
-    }
-
     public void clearNodeConnector(NodeConnector nc) {
         table.remove(nc);
     }
@@ -56,18 +52,24 @@ public class MacToPortTable {
         //Nothing to do right now
     }
 
+    public void clear() {
+    	table.clear();
+    }
     public void clearNode(Node n) {
         Set<NodeConnector> nodeConnectors = new LinkedHashSet<NodeConnector>();
 
-        for (Map.Entry<NodeConnector, Set<Long>> entry : this.table.entrySet())
-            if (((NodeConnector)entry.getKey()).getNode().equals(n))
+        for (Map.Entry<NodeConnector, Set<Long>> entry : this.table.entrySet()) {
+            if (((NodeConnector)entry.getKey()).getNode().equals(n)) {
                 nodeConnectors.add((NodeConnector)entry.getKey());
+            }
+        }
 
-        for (NodeConnector nc: nodeConnectors)
-            clearNodeConnector(nc);
+        for (NodeConnector nc: nodeConnectors) {
+        	clearNodeConnector(nc);
+        }
     }
 
-    public MacToPortTable() {
+    public MacTable() {
         super();
         table = new HashMap<NodeConnector, Set<Long> >();
     }
@@ -106,33 +108,6 @@ public class MacToPortTable {
         }
         return entries;
     }
-
-//    @XmlElement
-//    private String uuid;
-//    @XmlElement
-//    private String foo;
-//    @XmlElement
-//    private String bar;
-//
-//    public String getUuid() {
-//        return uuid;
-//    }
-//    public String getFoo() {
-//        return foo;
-//    }
-//    public String getBar() {
-//        return bar;
-//    }
-//    public MacToPortTable() {
-//        super();
-//    }
-//    public MacToPortTable(String uuid, String foo, String bar) {
-//        super();
-//        this.uuid = uuid;
-//        this.foo = foo;
-//        this.bar = bar;
-//    }
-//
 
     public String toString() {
         NodeConnector nc;

@@ -7,8 +7,10 @@ import java.util.UUID;
 
 import org.opendaylight.controller.sal.core.NodeConnector;
 import org.opendaylight.controller.sal.utils.Status;
-import org.sdnhub.odl.learningswitch.MacToPortTable.MacPortTableElem;
+import org.sdnhub.odl.learningswitch.MacTable.MacPortTableElem;
 
 public interface ILearningSwitch {
-	public List<MacPortTableElem> getData();
+	public Table getData();
+	public String getFunction();
+	public Boolean setFunction(String function);
 }

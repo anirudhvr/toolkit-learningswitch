@@ -2,17 +2,19 @@
 
 require.config({
   paths: {
-    "jquery": "/js/ext/jquery/dist/jquery.min",
-    "underscore": "/js/ext/underscore/underscore",
-    "backbone": "/js/ext/backbone/backbone",
-    "models": "/learningswitch/web/js/models", 			    // app
-    "views": "/learningswitch/web/js/views", 				    // app
-    "collections": "/learningswitch/web/js/collections" 	// app
+    'jquery': '/js/ext/jquery/dist/jquery',
+    'jquery-ui': '/js/ext/jquery-ui/ui/minified/jquery-ui.min',
+    'underscore': '/js/ext/underscore/underscore'
+  },  
+  shim: {
+    'jquery-ui' : { 
+      exports: '$',
+      deps: ['jquery']
+    }   
   }
 });
+
 require([
-  'app', '/js/phoenix.js'
-], function(App, Phoenix) {
-  new App.initialize();
-  new Phoenix.initialize();
+  'app'
+], function(App) {
 });
