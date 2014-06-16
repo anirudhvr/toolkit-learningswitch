@@ -75,6 +75,11 @@ public class Table {
 		return this.table.toString();
 	}
 	
+	public void clear()
+	{
+		table.clear();
+	}
+	
 	@XmlElement(name="table")
 	public List<NodeTable> getTable()
 	{

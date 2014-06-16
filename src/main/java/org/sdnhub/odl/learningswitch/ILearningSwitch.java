@@ -11,6 +11,7 @@ import org.sdnhub.odl.learningswitch.MacTable.MacPortTableElem;
 
 public interface ILearningSwitch {
 	public Table getData();
+	public void deleteData();
 	public String getFunction();
 	public Boolean setFunction(String function);
 }

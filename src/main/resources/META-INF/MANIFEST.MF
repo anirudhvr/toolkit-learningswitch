@@ -1,5 +1,5 @@
 Manifest-Version: 1.0
-Bnd-LastModified: 1402004858353
+Bnd-LastModified: 1402610009529
 Build-Jdk: 1.7.0_51
 Built-By: avr
 Bundle-Activator: org.sdnhub.odl.learningswitch.internal.Activator
@@ -25,26 +25,26 @@ Import-Package: org.opendaylight.controller.forwardingrulesmanager;versi
  troller.northbound.commons.exception;version="[0.4,1)",org.opendaylight
  .controller.northbound.commons.utils;version="[0.4,1)",javax.ws.rs;vers
  ion="[1.1,2)",javax.ws.rs.core;version="[1.1,2)",javax.xml.bind.annotat
- ion,org.springframework.web.servlet.view,org.apache.taglibs.standard.ta
- g.common.core,org.apache.taglibs.standard.tag.common.fmt,org.apache.tag
- libs.standard.tag.rt.core,org.springframework.beans.factory.xml;version
- ="[3.1,4)",org.springframework.beans;version="[3.1,4)",javax.servlet.js
- p.jstl.tlv,javax.servlet.jsp.el,javax.servlet.annotation;version="[2.6,
- 3)",org.springframework.web.servlet,javax.naming,com.fasterxml.jackson.
- jaxrs.json;version="[2.3,3)",org.apache.taglibs.standard.functions,org.
- apache.taglibs.standard.resources,org.apache.taglibs.standard.tei,org.o
- sgi.framework;version="[1.7,2)",javax.servlet.jsp.jstl.fmt,javax.servle
- t.jsp.jstl.core,org.springframework.web;version="[3.1,4)",com.fasterxml
- .jackson.annotation;version="[2.3,3)",javax.annotation,javax.servlet.re
- sources;version="[2.6,3)",org.springframework.web.servlet.config,com.su
- n.jersey.spi.container.servlet,javax.servlet.jsp.tagext,javax.xml.trans
- form,com.fasterxml.jackson.jaxrs.base;version="[2.3,3)",javax.xml.bind,
- org.springframework.context.config;version="[3.1,4)",javax.servlet;vers
- ion="[2.6,3)",org.apache.taglibs.standard.tlv,javax.servlet.jsp,org.spr
- ingframework.web.filter;version="[3.1,4)",org.springframework.web.conte
- xt;version="[3.1,4)",org.apache.taglibs.standard.tag.rt.fmt,javax.xml.p
- arsers,org.apache.catalina.filters,org.apache.commons.logging;version="
- [1.1,2)"
+ ion,javax.servlet.annotation;version="[2.6,3)",com.fasterxml.jackson.ja
+ xrs.json;version="[2.3,3)",org.springframework.web.servlet.config,org.s
+ pringframework.web.servlet,org.apache.taglibs.standard.tag.rt.fmt,javax
+ .servlet.jsp.el,javax.servlet.resources;version="[2.6,3)",org.apache.ta
+ glibs.standard.tag.rt.core,org.springframework.web.context;version="[3.
+ 1,4)",org.springframework.web.filter;version="[3.1,4)",org.springframew
+ ork.web.servlet.view,javax.servlet.jsp.tagext,javax.servlet.jsp,org.apa
+ che.catalina.filters,javax.servlet.jsp.jstl.tlv,com.fasterxml.jackson.a
+ nnotation;version="[2.3,3)",javax.servlet.jsp.jstl.fmt,org.apache.commo
+ ns.logging;version="[1.1,2)",javax.xml.bind,org.springframework.context
+ .config;version="[3.1,4)",javax.servlet.jsp.jstl.core,org.springframewo
+ rk.beans.factory.xml;version="[3.1,4)",org.apache.taglibs.standard.tag.
+ common.fmt,org.apache.taglibs.standard.tei,javax.servlet;version="[2.6,
+ 3)",org.apache.taglibs.standard.tag.common.core,com.sun.jersey.spi.cont
+ ainer.servlet,javax.xml.parsers,org.osgi.framework;version="[1.7,2)",or
+ g.apache.taglibs.standard.resources,org.apache.taglibs.standard.tlv,org
+ .springframework.beans;version="[3.1,4)",org.apache.taglibs.standard.fu
+ nctions,org.springframework.web;version="[3.1,4)",javax.annotation,com.
+ fasterxml.jackson.jaxrs.base;version="[2.3,3)",javax.naming,javax.xml.t
+ ransform
 Jaxrs-Resources: ,org.sdnhub.odl.learningswitch.northbound.AppNorthbound
 Originally-Created-By: Apache Maven Bundle Plugin
 Tool: Bnd-2.1.0.20130426-122213

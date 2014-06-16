@@ -239,6 +239,13 @@ public class LearningSwitch implements IListenDataPacket, ILearningSwitch, IInve
     }
     
     @Override
+    public void deleteData()
+    {
+    	this.table.clear();
+    }
+    
+    
+    @Override
     public String getFunction() {
     	return this.function;
     }

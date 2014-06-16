@@ -15,6 +15,8 @@ require.config({
 });
 
 require([
-  'app'
-], function(App) {
+  'app', '/js/phoenix.js'
+], function(App, Phoenix) {
+    new Phoenix.initialize();
+
 });

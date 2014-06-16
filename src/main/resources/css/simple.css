@@ -18,10 +18,6 @@
   background: rgb(202, 60, 60); /* this is a maroon */
 }
 
-table {
-  width: 100%;
-  margin-bottom: 20px;
-}
 
 fieldset {
 }
@@ -36,4 +32,32 @@ fieldset > input {
 
 #simpleContainer {
   margin-top: 15px;
+}
+body {
+    background: #fff;
+    padding-top:20px;
+    padding-left:30px;
+    padding-right:50px;
+    padding-bottom:10px;
+    background-color:#efefef;
+}
+
+h2 {
+  color: #646464;
+}
+
+h3 {
+  color: #464646;
+}
+
+ol > li {
+  padding: 2px 0;
+}
+
+code {
+  background: #F3F781;
+  padding: 2px 4px;
+  font-weight: bold;
+  color: #000;
+  border-radius: 2px;
 }

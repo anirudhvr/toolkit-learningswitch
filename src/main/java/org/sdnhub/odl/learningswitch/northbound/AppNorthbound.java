@@ -212,17 +212,18 @@ public class AppNorthbound {
         return simple.getData();
     }
     
+    
     /**
     *
-    * Sample DELETE REST API call
+    * Sample Delete REST API call
     *
     * @return A response string
     *
-    * <pre>
+    *         <pre>
     * Example:
     *
     * Request URL:
-    * http://localhost:8080/app/northbound/learningswitch/mactable
+    * http://localhost:8080/app/northbound/learningswitch/{uuid}
     *
     * Response body in XML:
     * &lt;?xml version="1.0" encoding="UTF-8" standalone="yes"?&gt;
@@ -232,6 +233,27 @@ public class AppNorthbound {
     * Sample Northbound API
     * </pre>
     */
+    @Path("/learningswitch/table")
+    @DELETE
+    @StatusCodes({ @ResponseCode(code = 200, condition = "Data Deleted successfully"),
+    	@ResponseCode(code = 401, condition = "User not authorized to perform this operation"),
+    	@ResponseCode(code = 500, condition = "Error deleting data"),
+    	@ResponseCode(code = 503, condition = "One or more of service is unavailable")})
+    @Consumes({ MediaType.APPLICATION_JSON})
+    public Response deleteTableEntries() {
+    	if (!NorthboundUtils.isAuthorized(getUserName(), "default", Privilege.WRITE, this)) {
+    		throw new UnauthorizedException("User is not authorized to perform this operation");
+    	}
+    	ILearningSwitch simple = (ILearningSwitch) ServiceHelper.getGlobalInstance(ILearningSwitch.class, this);
+    	if (simple == null) {
+    		throw new ServiceUnavailableException("Simple Service " + RestMessages.SERVICEUNAVAILABLE.toString());
+    	}
+
+    	simple.deleteData();
+    	return Response.status(Response.Status.OK).build();
+    }
+    
+    
     
     @XmlRootElement(name="NodeToFlowEntries")
     class NodeToFlowEntries {
